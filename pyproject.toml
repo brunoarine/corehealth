@@ -1,0 +1,19 @@
+[project]
+name = "corehealth"
+version = "0.1.0"
+description = "Add your description here"
+readme = "README.md"
+authors = [
+    { name = "Bruno Arine", email = "bruno.arine@runbox.com" }
+]
+requires-python = ">=3.11"
+dependencies = []
+
+[project.scripts]
+corehealth = "corehealth:main"
+corehealth-report = "corehealth.report:main"
+corehealth-neighbors = "corehealth.neighbors:main"
+
+[build-system]
+requires = ["uv_build>=0.12.7,<0.13.0"]
+build-backend = "uv_build"
