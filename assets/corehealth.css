@@ -262,6 +262,15 @@ mark {
 }
 
 /* Nome do nó colorido conforme anúncios/dia (3–4, 5–8, > 8). */
+a.node-rate {
+  text-decoration: none;
+}
+
+a.node-rate:hover,
+a.node-rate:focus-visible {
+  text-decoration: underline;
+}
+
 .node-rate {
   font-weight: 600;
 }

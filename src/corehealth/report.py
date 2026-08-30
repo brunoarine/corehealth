@@ -234,7 +234,9 @@ def observers_cell(observer_names):
 
 def high_confidence_neighbors(db_path, pk, window):
     """Nomes dos vizinhos imediatos (primeiro salto RF) com confiança 'high'."""
-    _node, _capture, links = compute_neighbors(db_path, pk, time_range=window)
+    _node, _capture, links = compute_neighbors(
+        db_path, pk, time_range=timedelta(hours=48)
+    )
     return [l["name"] for l in links if l["confidence"] == "high"]
 
 
@@ -245,13 +247,21 @@ def neighbors_cell(names):
     return details_cell(names, "Nenhum vizinho de alta confiança no período")
 
 
-def node_name_cell(name, rate):
-    """Nome do nó colorido conforme os anúncios/dia (ver ``rate_class``)."""
+CORESCOPE_BASE = "https://corescope.meshsorocaba.org"
+
+
+def node_name_cell(name, pk, rate):
+    """Nome do nó como link para o CoreScope, colorido conforme anúncios/dia.
+
+    O CoreScope identifica o nó pela chave pública completa (``pk``).
+    """
     cls = rate_class(rate)
     title = f"{fmt_br(rate)} anúncios/dia"
+    url = f"{CORESCOPE_BASE}/#/nodes/{pk}"
     return Raw(
-        f'<span class="node-rate {cls}"'
-        f' title="{html.escape(title)}">{html.escape(name)}</span>'
+        f'<a class="node-rate {cls}" href="{html.escape(url)}"'
+        f' title="{html.escape(title)}" target="_blank"'
+        ' rel="noopener">' f"{html.escape(name)}</a>"
     )
 
 
@@ -294,7 +304,7 @@ def build_excessive_adverts_section(db_path, window, min_adverts,
             vizinhos = None
         rows.append((
             len(rows) + 1,
-            node_name_cell(name, rate),
+            node_name_cell(name, pk, rate),
             nid,
             fmt_br(rate),
             f"{fmt_br(pz)}%",
