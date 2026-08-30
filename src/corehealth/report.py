@@ -271,7 +271,7 @@ def build_excessive_adverts_section(db_path, window, min_adverts,
 
     Critério (apenas repetidores, janela de análise): incluir nó ⇔
     anúncios > min_adverts E observadores distintos > min_observers E
-    nº de vizinhos de alta confiança ≥ 1.
+    nº de vizinhos de alta confiança ≥ 2.
     """
     try:
         capture_info, results = compute_stats(
@@ -303,8 +303,8 @@ def build_excessive_adverts_section(db_path, window, min_adverts,
             print(f"aviso: vizinhos indeterminados para {name} ({nid}): {exc}",
                   file=sys.stderr)
             vizinhos = None
-        if not vizinhos:
-            # Critério: nº de vizinhos ≥ 1 (indeterminado também não entra)
+        if vizinhos is None or len(vizinhos) < 2:
+            # Critério: nº de vizinhos ≥ 2 (indeterminado também não entra)
             continue
         rows.append((
             len(rows) + 1,
@@ -325,7 +325,7 @@ def build_excessive_adverts_section(db_path, window, min_adverts,
         f"<mark>mais de {min_observers} observador"
         f"{'es' if min_observers != 1 else ''} distinto"
         f"{'s' if min_observers != 1 else ''}</mark>, além de terem "
-        "<mark>1 ou mais vizinhos</mark> — ou seja, nós que "
+        "<mark>2 ou mais vizinhos</mark> — ou seja, nós que "
         "anunciam demais <em>e</em> não estão isolados numa região. "
         "Anúncios em excesso consomem tempo de ar e inflam as tabelas de "
         "rota de toda a rede.</p>"
