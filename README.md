@@ -18,9 +18,9 @@ corehealth-report
 |---|---|---|
 | `--db` | `db/meshcore.db` | Banco SQLite do CoreScope |
 | `--output` | `output/index.html` | Arquivo de saída |
-| `-t/--window` | `24h` | Janela de análise (ancorada no fim da captura) |
-| `--min-adverts` | `2` | Critério: anúncios > valor |
-| `--min-observers` | `1` | Critério: observadores distintos > valor |
+| `-t/--window` | `7d` | Janela de análise (ancorada no fim da captura) |
+| `--min-adverts` | `2` | Critério: média diária de anúncios > valor |
+| `--min-observers` | `5` | Critério: observadores distintos > valor |
 | `--css-mode` | `inline` | `inline` (CSS embutido) ou `link` (externo) |
 | `--strict` | — | Propaga erros de seção (útil em CI) |
 
