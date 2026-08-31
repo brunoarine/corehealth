@@ -3,9 +3,13 @@
 top_adverts.py — Top advertising nodes in the MeshCore capture.
 
 Outputs a table of the top N nodes ranked by total ADVERT transmissions,
-with columns: node name, 2-byte node ID, node role, total adverts, adverts/day,
-% zero-hop adverts, % flood adverts, and neighbor node IDs (from the
-neighbor_edges table, sorted by link strength).
+with columns: node name, 2-byte node ID, node role, total adverts,
+median adverts/day, % zero-hop adverts, % flood adverts, and neighbor node IDs
+(from the neighbor_edges table, sorted by link strength).
+
+The daily rate is the MEDIAN of per-day advert counts over the calendar
+days (UTC) spanned by the analysis window, counting 0 for days without
+adverts — robust against isolated spikes.
 
 Usage:
     python3 top_adverts.py                       # top 20 from ./meshcore.db
@@ -25,6 +29,7 @@ import csv
 import json
 import re
 import sqlite3
+import statistics
 import sys
 from collections import defaultdict
 from datetime import datetime, timedelta
@@ -113,7 +118,10 @@ def compute_stats(db_path, time_range=None, repeaters_only=False,
     """Return (capture_info, list_of_result_tuples).
 
     Each result tuple is (name, node_id, role, total_adverts,
-    adverts_per_day, pct_zero_hop, pct_flood, neighbor_ids, public_key).
+    median_adverts_per_day, pct_zero_hop, pct_flood, neighbor_ids,
+    public_key).  The daily rate is the median of per-day advert counts
+    over the calendar days (UTC) spanned by the filtered capture, with
+    0 for days without adverts.
 
     If *time_range* (a timedelta) is given, only adverts whose
     first_seen falls within the last *time_range* of the capture
@@ -201,13 +209,27 @@ def compute_stats(db_path, time_range=None, repeaters_only=False,
     )
     span_days = (capture_end - capture_start).total_seconds() / 86400.0
 
+    # Calendar days (UTC) spanned by the filtered capture — the median
+    # is computed over these days, counting 0 for days without adverts.
+    all_days = []
+    day = capture_start.date()
+    while day <= capture_end.date():
+        all_days.append(day)
+        day += timedelta(days=1)
+
     # --- Aggregate per node ---
     stats = defaultdict(lambda: {"name": None, "nid": None, "role": None,
                                  "total": 0, "zero": 0, "flood": 0})
+    day_counts = defaultdict(lambda: defaultdict(int))  # pubkey -> {date: n}
 
     for r in rows:
         key = r["public_key"]
         s = stats[key]
+        seen_day = datetime.fromisoformat(
+            r["first_seen"].replace("Z", "+00:00")
+        ).date()
+        day_counts[key][seen_day] += 1
+
         s["name"] = r["name"] or "(unnamed)"
         s["nid"] = r["public_key"][:4].upper()
         s["role"] = r["role"] or "?"
@@ -227,7 +249,8 @@ def compute_stats(db_path, time_range=None, repeaters_only=False,
     results = []
     for key, s in stats.items():
         total = s["total"]
-        rate = total / span_days if span_days > 0 else float("inf")
+        counts = [day_counts[key].get(d, 0) for d in all_days]
+        rate = float(statistics.median(counts)) if counts else 0.0
         pct_zero = 100.0 * s["zero"] / total
         pct_flood = 100.0 * s["flood"] / total
         neighbors = neighbor_edges.get(key, [])
@@ -291,7 +314,7 @@ def print_table(capture_info, results, top_n):
         f"  |  Unique nodes: {capture_info['unique_nodes']}"
     )
     print()
-    header = f"{'#':>3}  {'Node Name':<28} {'NodeID':<6} {'Role':<10} {'Adverts':>7} {'Adv/day':>8} {'%0-hop':>7} {'%Flood':>7}  {'Neighbors':<44}"
+    header = f"{'#':>3}  {'Node Name':<28} {'NodeID':<6} {'Role':<10} {'Adverts':>7} {'Med/day':>8} {'%0-hop':>7} {'%Flood':>7}  {'Neighbors':<44}"
     print(header)
     print("-" * len(header))
     for i, (name, nid, role, total, rate, pz, pf, nbrs, _pk) in enumerate(results[:top_n], 1):
@@ -302,7 +325,8 @@ def print_table(capture_info, results, top_n):
 def print_csv(capture_info, results, top_n):
     w = csv.writer(sys.stdout)
     w.writerow(["rank", "node_name", "node_id", "role", "total_adverts",
-                "adverts_per_day", "pct_zero_hop", "pct_flood", "neighbors"])
+                "median_adverts_per_day", "pct_zero_hop", "pct_flood",
+                "neighbors"])
     for i, (name, nid, role, total, rate, pz, pf, nbrs, _pk) in enumerate(results[:top_n], 1):
         w.writerow([i, name, nid, role, total, f"{rate:.1f}",
                     f"{pz:.1f}", f"{pf:.1f}", ",".join(nbrs)])
@@ -330,7 +354,7 @@ def print_json(capture_info, results, top_n):
             "public_key": pk,
             "role": role,
             "total_adverts": total,
-            "adverts_per_day": round(rate, 1) if rate != float("inf") else None,
+            "median_adverts_per_day": round(rate, 1),
             "pct_zero_hop": round(pz, 1),
             "pct_flood": round(pf, 1),
             "neighbors": nbrs,

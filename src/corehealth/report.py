@@ -259,7 +259,7 @@ def node_name_cell(name, pk, rate):
     O CoreScope identifica o nó pela chave pública completa (``pk``).
     """
     cls = rate_class(rate)
-    title = f"{fmt_br(rate)} anúncios/dia"
+    title = f"mediana de {fmt_br(rate)} anúncios/dia"
     url = f"{CORESCOPE_BASE}/#/nodes/{pk}"
     return Raw(
         f'<a class="node-rate {cls}" href="{html.escape(url)}"'
@@ -273,7 +273,7 @@ def build_excessive_adverts_section(db_path, window, min_adverts,
     """Seção 'Anúncios Excessivos'.
 
     Critério (apenas repetidores, janela de análise): incluir nó ⇔
-    média diária de anúncios > min_adverts E observadores distintos
+    mediana diária de anúncios > min_adverts E observadores distintos
     > min_observers E nº de vizinhos de alta confiança ≥ 2.
     """
     try:
@@ -323,7 +323,7 @@ def build_excessive_adverts_section(db_path, window, min_adverts,
     window_label = f"em {window_short(window)}"
     intro = (
         "<p>Esta seção lista <strong>repetidores</strong> com "
-        f"<mark>média diária de mais de {min_adverts} anúncios</mark> "
+        f"<mark>mediana diária de mais de {min_adverts} anúncios</mark> "
         f"{window_label} da captura e que foram ouvidos por "
         f"<mark>mais de {min_observers} observador"
         f"{'es' if min_observers != 1 else ''} distinto"
@@ -349,7 +349,7 @@ def build_excessive_adverts_section(db_path, window, min_adverts,
 
     if rows:
         table = render_table(
-            headers=["#", "Nó", "ID", "Anúncios/dia",
+            headers=["#", "Nó", "ID", "Anúncios/dia (mediana)",
                      "% direto (0 salto)", "% inundação", "Observadores",
                      "Vizinhos"],
             rows=rows,
@@ -433,9 +433,9 @@ def parse_args(argv=None):
                    default=DEFAULT_WINDOW, metavar="DURAÇÃO",
                    help="Janela de análise, ex.: 24h, 7d (padrão: 7d)")
     p.add_argument("--min-adverts", type=int, default=DEFAULT_MIN_ADVERTS,
-                   help="Média diária mínima de anúncios para considerar "
-                        "excessivo (critério: anúncios/dia > valor; "
-                        f"padrão: {DEFAULT_MIN_ADVERTS})")
+                   help="Mediana diária mínima de anúncios para considerar "
+                        "excessivo (critério: mediana de anúncios/dia > "
+                        f"valor; padrão: {DEFAULT_MIN_ADVERTS})")
     p.add_argument("--min-observers", type=int, default=DEFAULT_MIN_OBSERVERS,
                    help="Mínimo de observadores distintos (critério: "
                         f"observadores > valor; padrão: {DEFAULT_MIN_OBSERVERS})")
