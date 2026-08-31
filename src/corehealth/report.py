@@ -45,7 +45,7 @@ PROJECT_ROOT = Path(__file__).resolve().parents[2]
 DEFAULT_DB = "db/meshcore.db"
 DEFAULT_OUTPUT = "output/index.html"
 DEFAULT_WINDOW = timedelta(days=7)
-DEFAULT_MIN_ADVERTS = 2
+DEFAULT_MIN_ADVERTS = 3
 DEFAULT_MIN_OBSERVERS = 5
 PAGE_TITLE = "CoreHealth — Saúde da rede MeshCore BR"
 CSS_PATH = PROJECT_ROOT / "assets" / "corehealth.css"
