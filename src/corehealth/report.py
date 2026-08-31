@@ -44,7 +44,7 @@ TZ_BR = ZoneInfo("America/Sao_Paulo")
 PROJECT_ROOT = Path(__file__).resolve().parents[2]
 DEFAULT_DB = "db/meshcore.db"
 DEFAULT_OUTPUT = "output/index.html"
-DEFAULT_WINDOW = timedelta(hours=24)
+DEFAULT_WINDOW = timedelta(days=7)
 DEFAULT_MIN_ADVERTS = 2
 DEFAULT_MIN_OBSERVERS = 5
 PAGE_TITLE = "CoreHealth — Saúde da rede MeshCore BR"
@@ -233,9 +233,12 @@ def observers_cell(observer_names):
 
 
 def high_confidence_neighbors(db_path, pk, window):
-    """Nomes dos vizinhos imediatos (primeiro salto RF) com confiança 'high'."""
+    """Nomes dos vizinhos imediatos (primeiro salto RF) com confiança 'high'.
+
+    Usa a mesma janela de análise informada na linha de comando.
+    """
     _node, _capture, links = compute_neighbors(
-        db_path, pk, time_range=timedelta(hours=48)
+        db_path, pk, time_range=window
     )
     return [l["name"] for l in links if l["confidence"] == "high"]
 
@@ -428,7 +431,7 @@ def parse_args(argv=None):
                    help=f"Arquivo de saída (padrão: {DEFAULT_OUTPUT})")
     p.add_argument("-t", "--window", type=parse_time_range,
                    default=DEFAULT_WINDOW, metavar="DURAÇÃO",
-                   help="Janela de análise, ex.: 24h, 7d (padrão: 24h)")
+                   help="Janela de análise, ex.: 24h, 7d (padrão: 7d)")
     p.add_argument("--min-adverts", type=int, default=DEFAULT_MIN_ADVERTS,
                    help="Mínimo de anúncios para considerar excessivo "
                         f"(critério: anúncios > valor; padrão: {DEFAULT_MIN_ADVERTS})")
